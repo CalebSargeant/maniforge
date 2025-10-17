@@ -51,7 +51,7 @@ jobs:
       - name: Check if auto-merge is enabled
         id: check-auto-merge
         run: |
-          AUTO_MERGE_ENABLED=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          AUTO_MERGE_ENABLED=$(curl -s -H "Authorization: token $GH_TOKEN" \
             https://api.github.com/repos/${{ github.repository }} \
             | jq -r '.allow_auto_merge')
           echo "Auto-merge enabled: $AUTO_MERGE_ENABLED"
