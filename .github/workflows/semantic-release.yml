@@ -1,29 +1,66 @@
-name: Build and Release
+name: Semantic Release
 
 on:
   push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
+  release:
+    runs-on: ubuntu-latest
+    concurrency: release
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Python Semantic Release
+        id: release
+        uses: python-semantic-release/python-semantic-release@v10.4.1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to GitHub Releases
+        uses: python-semantic-release/upload-to-gh-release@main
+        if: steps.release.outputs.released == 'true'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.release.outputs.tag }}
+
+    outputs:
+      released: ${{ steps.release.outputs.released }}
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+
   build:
-    name: Build on ${{ matrix.os }} - ${{ matrix.arch }}
+    name: Build binaries on ${{ matrix.os }} - ${{ matrix.arch }}
+    needs: release
+    if: needs.release.outputs.released == 'true'
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
-          # macOS builds
           - os: macos
             arch: arm64
-            runner: macos-14  # M1/M2/M3 runners
+            runner: macos-14
             artifact_name: maniforge-macos-arm64
           - os: macos
             arch: x86_64
-            runner: macos-13  # Intel runners
+            runner: macos-13
             artifact_name: maniforge-macos-x86_64
-          
-          # Linux builds
           - os: linux
             arch: x86_64
             runner: ubuntu-latest
@@ -34,8 +71,10 @@ jobs:
             artifact_name: maniforge-linux-arm64
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release.outputs.tag }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -69,38 +108,19 @@ jobs:
           name: ${{ matrix.artifact_name }}
           path: dist/${{ matrix.artifact_name }}
 
-  release:
-    name: Create Release
-    needs: build
+  upload:
+    name: Upload binaries to release
+    needs: [release, build]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
 
-      - name: Display structure of downloaded files
+      - name: Display structure
         run: ls -R dist
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            dist/maniforge-macos-arm64/maniforge-macos-arm64
-            dist/maniforge-macos-x86_64/maniforge-macos-x86_64
-            dist/maniforge-linux-x86_64/maniforge-linux-x86_64
-            dist/maniforge-linux-arm64/maniforge-linux-arm64
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Calculate SHA256 checksums
         run: |
@@ -114,9 +134,15 @@ jobs:
           done
           cat SHA256SUMS
 
-      - name: Upload checksums
+      - name: Upload binaries to release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/SHA256SUMS
+          tag_name: ${{ needs.release.outputs.tag }}
+          files: |
+            dist/maniforge-macos-arm64/maniforge-macos-arm64
+            dist/maniforge-macos-x86_64/maniforge-macos-x86_64
+            dist/maniforge-linux-x86_64/maniforge-linux-x86_64
+            dist/maniforge-linux-arm64/maniforge-linux-arm64
+            dist/SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
