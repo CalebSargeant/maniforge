@@ -35,7 +35,7 @@ jobs:
 
       - name: Create release PR
         id: create-pr
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e #v7.0.8
+        uses: peter-evans/create-pull-request@v6
         if: steps.release.outputs.released == 'true'
         with:
           commit-message: "chore(release): prepare version bump"
@@ -43,10 +43,15 @@ jobs:
           branch: release-bot/version-bump-${{ github.run_id }}
           base: main
           token: ${{ secrets.GITHUB_TOKEN }}
+          delete-branch: true
+
+      - name: Output if no PR created
+        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number == ''
+        run: echo "No changes to commit. No PR was created."
 
       - name: Enable auto-merge
         if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != ''
-        run: gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }}
+        run: gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }} || echo "Auto-merge failed. Please enable auto-merge in repo settings."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
