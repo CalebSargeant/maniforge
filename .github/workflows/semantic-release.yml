@@ -33,6 +33,41 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Create release PR
+        id: create-pr
+        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e #v7.0.8
+        if: steps.release.outputs.released == 'true'
+        with:
+          commit-message: "chore(release): prepare version bump"
+          title: "chore(release): prepare version bump"
+          branch: release-bot/version-bump-${{ github.run_id }}
+          base: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-branch: true
+
+      - name: Output if no PR created
+        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number == ''
+        run: echo "No release PR was created."
+      - name: Check if auto-merge is enabled
+        id: check-auto-merge
+        run: |
+          AUTO_MERGE_ENABLED=$(curl -s -H "Authorization: token $GH_TOKEN" \
+            https://api.github.com/repos/${{ github.repository }} \
+            | jq -r '.allow_auto_merge')
+          echo "Auto-merge enabled: $AUTO_MERGE_ENABLED"
+          echo "auto_merge_enabled=$AUTO_MERGE_ENABLED" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge
+        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != '' && steps.check-auto-merge.outputs.auto_merge_enabled == 'true'
+        run: gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }} || echo "Auto-merge failed. Please check repository settings and branch protection rules."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Output if auto-merge not enabled
+        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != '' && steps.check-auto-merge.outputs.auto_merge_enabled != 'true'
+        run: echo "Auto-merge is not enabled for this repository. Please merge the release PR manually at https://github.com/${{ github.repository }}/pull/${{ steps.create-pr.outputs.pull-request-number }}"
       - name: Publish to GitHub Releases
         uses: python-semantic-release/upload-to-gh-release@0a92b5d7ebfc15a84f9801ebd1bf706343d43711 # v9.8.9
         if: steps.release.outputs.released == 'true'
