@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+dist/
+*.spec.backup
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# PyInstaller
+*.manifest
+
+# Maniforge generated
+apps/
+maniforge.yaml
+!examples/maniforge.yaml
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

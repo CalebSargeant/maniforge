@@ -1,0 +1,71 @@
+name: 'Maniforge'
+description: 'Generate Kubernetes manifests from simple app definitions'
+author: 'Caleb Sargeant'
+
+branding:
+  icon: 'package'
+  color: 'blue'
+
+inputs:
+  command:
+    description: 'Command to run (plan, apply, validate, init)'
+    required: true
+    default: 'plan'
+  config:
+    description: 'Path to maniforge.yaml configuration file'
+    required: false
+    default: 'maniforge.yaml'
+  version:
+    description: 'Version of maniforge to use (default: latest)'
+    required: false
+    default: 'latest'
+
+outputs:
+  exit-code:
+    description: 'Exit code from maniforge command'
+    value: ${{ steps.maniforge.outputs.exit-code }}
+  changes-detected:
+    description: 'Whether changes were detected (for plan command)'
+    value: ${{ steps.maniforge.outputs.changes-detected }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Download Maniforge
+      shell: bash
+      run: |
+        VERSION="${{ inputs.version }}"
+        if [ "$VERSION" = "latest" ]; then
+          VERSION_URL="latest/download"
+        else
+          VERSION_URL="download/${VERSION}"
+        fi
+        
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        
+        BINARY_NAME="maniforge-${OS}-${ARCH}"
+        DOWNLOAD_URL="https://github.com/calebsargeant/maniforge/releases/${VERSION_URL}/${BINARY_NAME}"
+        
+        echo "Downloading maniforge from ${DOWNLOAD_URL}"
+        curl -L "${DOWNLOAD_URL}" -o maniforge
+        chmod +x maniforge
+
+    - name: Run Maniforge
+      id: maniforge
+      shell: bash
+      run: |
+        set +e
+        ./maniforge --config "${{ inputs.config }}" ${{ inputs.command }}
+        EXIT_CODE=$?
+        echo "exit-code=${EXIT_CODE}" >> $GITHUB_OUTPUT
+        
+        # For plan command, exit code 1 means changes detected
+        if [ "${{ inputs.command }}" = "plan" ] && [ $EXIT_CODE -eq 1 ]; then
+          echo "changes-detected=true" >> $GITHUB_OUTPUT
+          exit 0
+        elif [ "${{ inputs.command }}" = "plan" ] && [ $EXIT_CODE -eq 0 ]; then
+          echo "changes-detected=false" >> $GITHUB_OUTPUT
+        fi
+        
+        exit $EXIT_CODE

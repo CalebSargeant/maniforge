@@ -1,0 +1,79 @@
+# Example workflow demonstrating maniforge GitHub Action usage
+# Rename to example.yml to enable
+
+name: Maniforge CI
+
+on:
+  pull_request:
+    paths:
+      - 'maniforge.yaml'
+      - '.github/workflows/maniforge.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'maniforge.yaml'
+
+jobs:
+  validate:
+    name: Validate Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate maniforge config
+        uses: calebsargeant/maniforge@v1
+        with:
+          command: validate
+          config: maniforge.yaml
+
+  plan:
+    name: Plan Changes
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Plan changes
+        id: plan
+        uses: calebsargeant/maniforge@v1
+        with:
+          command: plan
+          config: maniforge.yaml
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.plan.outputs.changes-detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ Maniforge detected changes. Run `maniforge plan` locally to review.'
+            })
+
+  apply:
+    name: Apply Changes
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Apply changes
+        uses: calebsargeant/maniforge@v1
+        with:
+          command: apply
+          config: maniforge.yaml
+
+      - name: Commit generated manifests
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/
+          git diff --staged --quiet || git commit -m "Update manifests via maniforge"
+          git push
