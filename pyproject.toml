@@ -5,6 +5,7 @@ version_variables = []
 build_command = ""
 major_on_zero = true
 tag_format = "v{version}"
+upload_to_vcs_release = false
 
 [tool.semantic_release.branches.main]
 match = "main"
@@ -41,6 +42,10 @@ ignore_token_for_push = false
 
 [tool.semantic_release.remote.token]
 env = "GH_TOKEN"
+
+[tool.semantic_release.commit_author]
+env = "GIT_COMMIT_AUTHOR"
+default = "github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
 
 [tool.semantic_release.publish]
 dist_glob_patterns = ["dist/*"]
