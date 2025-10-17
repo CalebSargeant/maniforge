@@ -4,88 +4,32 @@ on:
   push:
     branches:
       - main
-
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 jobs:
-  release:
-    runs-on: ubuntu-latest
-    concurrency: release
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}
-
-      - name: Setup Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c #v6.0.0
-        with:
-          python-version: '3.11'
-
-      - name: Python Semantic Release
-        id: release
-        uses: python-semantic-release/python-semantic-release@4d4cb0ab842247caea1963132c242c62aab1e4d5 # v10.4.1
-        with:
-          github_token: ${{ secrets.PAT_TOKEN }}
-          git_committer_name: "github-actions[bot]"
-          git_committer_email: "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create release PR
-        id: create-pr
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e #v7.0.8
-        if: steps.release.outputs.released == 'true'
-        with:
-          commit-message: "chore(release): prepare version bump"
-          title: "chore(release): prepare version bump"
-          branch: release-bot/version-bump-${{ github.run_id }}
-          base: main
-          token: ${{ secrets.PAT_TOKEN }}
-          delete-branch: true
-
-      - name: Output if no PR created
-        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number == ''
-        run: echo "No release PR was created."
-      - name: Check if auto-merge is enabled
-        id: check-auto-merge
-        run: |
-          AUTO_MERGE_ENABLED=$(curl -s -H "Authorization: token $GH_TOKEN" \
-            https://api.github.com/repos/${{ github.repository }} \
-            | jq -r '.allow_auto_merge')
-          echo "Auto-merge enabled: $AUTO_MERGE_ENABLED"
-          echo "auto_merge_enabled=$AUTO_MERGE_ENABLED" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Enable auto-merge
-        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != '' && steps.check-auto-merge.outputs.auto_merge_enabled == 'true'
-        run: gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }} || echo "Auto-merge failed. Please check repository settings and branch protection rules."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Output if auto-merge not enabled
-        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != '' && steps.check-auto-merge.outputs.auto_merge_enabled != 'true'
-        run: echo "Auto-merge is not enabled for this repository. Please merge the release PR manually at https://github.com/${{ github.repository }}/pull/${{ steps.create-pr.outputs.pull-request-number }}"
-      - name: Publish to GitHub Releases
-        uses: python-semantic-release/upload-to-gh-release@0a92b5d7ebfc15a84f9801ebd1bf706343d43711 # v9.8.9
-        if: steps.release.outputs.released == 'true'
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          tag: ${{ steps.release.outputs.tag }}
-
-    outputs:
-      released: ${{ steps.release.outputs.released }}
-      version: ${{ steps.release.outputs.version }}
-      tag: ${{ steps.release.outputs.tag }}
+  semantic-release:
+    uses: CalebSargeant/reusable-workflows/.github/workflows/semantic-release.yaml@9f404b4ab1af504650da1cd7813ea4ea1cda1767 # first commit when it was introduced - no versioning as of yet
+    with:
+      bump: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.bump || '' }}
+      working_directory: '.'
+    secrets:
+      APP_ID: ${{ secrets.RELEASE_APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
 
   build:
     name: Build binaries on ${{ matrix.os }} - ${{ matrix.arch }}
-    needs: release
-    if: needs.release.outputs.released == 'true'
+    needs: semantic-release
+    if: needs.semantic-release.outputs.released == 'true'
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
@@ -109,12 +53,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 #v5.0.0
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          ref: ${{ needs.release.outputs.tag }}
+          ref: ${{ needs.semantic-release.outputs.tag }}
 
       - name: Set up Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c #v6.0.0
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
           python-version: '3.11'
 
@@ -147,9 +91,9 @@ jobs:
 
   upload:
     name: Upload binaries to release
-    needs: [release, build]
+    needs: [semantic-release, build]
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5.0.0
@@ -174,7 +118,7 @@ jobs:
       - name: Upload binaries to release
         uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
         with:
-          tag_name: ${{ needs.release.outputs.tag }}
+          tag_name: ${{ needs.semantic-release.outputs.tag }}
           files: |
             dist/maniforge-macos-arm64/maniforge-macos-arm64
             dist/maniforge-macos-x86_64/maniforge-macos-x86_64
