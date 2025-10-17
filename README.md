@@ -357,10 +357,28 @@ jobs:
 
 ### Releasing
 
+Releases are automatic using semantic versioning. Use conventional commits:
+
 ```bash
-git tag v1.0.0
-git push origin v1.0.0  # GitHub Actions builds all platforms
+# Features (bumps minor version)
+git commit -m "feat: add new storage type support"
+
+# Fixes (bumps patch version)
+git commit -m "fix: resolve port mapping issue"
+
+# Breaking changes (bumps major version)
+git commit -m "feat!: redesign configuration format"
+
+# Push to main - automatic release triggers
+git push origin main
 ```
+
+The workflow automatically:
+1. Determines version based on commits
+2. Creates git tag and GitHub release
+3. Builds binaries for all platforms
+4. Uploads binaries + SHA256SUMS
+5. Generates CHANGELOG.md
 
 Download SHA256SUMS from release and update `maniforge.rb` checksums.
 

@@ -21,6 +21,9 @@ apps/
 maniforge.yaml
 !examples/maniforge.yaml
 
+# Semantic release
+CHANGELOG.md
+
 # macOS
 .DS_Store
 .AppleDouble
