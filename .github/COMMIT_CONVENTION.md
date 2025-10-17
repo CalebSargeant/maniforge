@@ -18,6 +18,7 @@ Maniforge uses [Conventional Commits](https://www.conventionalcommits.org/) for 
 
 - `feat:` - New feature → **Minor version bump** (0.1.0 → 0.2.0)
 - `fix:` - Bug fix → **Patch version bump** (0.1.0 → 0.1.1)
+- `perf:` - Performance improvement → **Patch version bump** (0.1.0 → 0.1.1)
 - `feat!:` or `fix!:` - Breaking change → **Major version bump** (0.1.0 → 1.0.0)
 
 ### No Version Bump
@@ -25,7 +26,6 @@ Maniforge uses [Conventional Commits](https://www.conventionalcommits.org/) for 
 - `docs:` - Documentation only
 - `style:` - Code style changes (formatting, etc.)
 - `refactor:` - Code refactoring
-- `perf:` - Performance improvements
 - `test:` - Adding/updating tests
 - `build:` - Build system changes
 - `ci:` - CI configuration changes

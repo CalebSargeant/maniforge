@@ -1,4 +1,5 @@
 [tool.semantic_release]
+version = "0.0.0"
 version_toml = ["pyproject.toml:tool.semantic_release.version"]
 version_variables = []
 build_command = ""
@@ -41,7 +42,3 @@ ignore_token_for_push = false
 [tool.semantic_release.publish]
 dist_glob_patterns = ["dist/*"]
 upload_to_vcs_release = true
-
-# Version tracking
-[tool.semantic_release]
-version = "0.0.0"
