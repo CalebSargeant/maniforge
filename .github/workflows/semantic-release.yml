@@ -67,8 +67,9 @@ jobs:
 
       - name: Output if auto-merge not enabled
         if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != '' && steps.check-auto-merge.outputs.auto_merge_enabled != 'true'
-        run: echo "Auto-merge is not enabled in repository settings. Please enable auto-merge or merge the PR manually."
-        run: gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }} || { echo "Auto-merge failed. Please check repository settings and branch protection rules."; exit 1; }
+        run: |
+          echo "Auto-merge is not enabled in repository settings. Please enable auto-merge or merge the PR manually."
+          gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }} || { echo "Auto-merge failed. Please check repository settings and branch protection rules."; exit 1; }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
