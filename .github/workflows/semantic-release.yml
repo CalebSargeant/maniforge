@@ -47,8 +47,12 @@ jobs:
 
       - name: Output if no PR created
         if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number == ''
-        run: echo "No changes to commit. No PR was created."
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-branch: true
 
+      - name: Output if no PR created
+        if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number == ''
+        run: echo "No changes to commit. No PR was created."
       - name: Enable auto-merge
         if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != ''
         run: gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }} || { echo "Auto-merge failed. Please check repository settings and branch protection rules."; exit 1; }
