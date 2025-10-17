@@ -67,11 +67,7 @@ jobs:
 
       - name: Output if auto-merge not enabled
         if: steps.release.outputs.released == 'true' && steps.create-pr.outputs.pull-request-number != '' && steps.check-auto-merge.outputs.auto_merge_enabled != 'true'
-        run: |
-          gh pr merge --auto --squash ${{ steps.create-pr.outputs.pull-request-number }} || { echo "Auto-merge failed. Please check repository settings and branch protection rules."; exit 1; }
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+        run: echo "Auto-merge is not enabled for this repository. Please merge the release PR manually at https://github.com/${{ github.repository }}/pull/${{ steps.create-pr.outputs.pull-request-number }}"
       - name: Publish to GitHub Releases
         uses: python-semantic-release/upload-to-gh-release@0a92b5d7ebfc15a84f9801ebd1bf706343d43711 # v9.8.9
         if: steps.release.outputs.released == 'true'
