@@ -96,6 +96,8 @@ jobs:
     name: Upload binaries to release
     needs: [semantic-release, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Download all artifacts
