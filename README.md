@@ -394,10 +394,82 @@ git remote add origin git@github.com:calebsargeant/homebrew-tap.git
 git push -u origin main
 ```
 
+## 📊 Capacity Planning
+
+Maniforge now includes built-in capacity planning that analyzes resource usage across your node groups!
+
+When you run `maniforge plan`, you'll see:
+- **CPU and Memory usage** per node type
+- **Visual progress bars** showing capacity utilization
+- **Requests vs Limits** analysis
+- **Over-capacity warnings** when limits exceed node capacity
+- **Per-app resource breakdown**
+
+### Node Capacity Configuration
+
+Define node capacity in your platform configuration:
+
+```yaml
+nodeSelectors:
+  pi:
+    labels:
+      type: pi
+    capacity:
+      cpu: 4000m
+      memory: 8Gi
+  workers:
+    labels:
+      type: worker
+    capacity:
+      cpu: 8000m
+      memory: 16Gi
+```
+
+### Example Output
+
+```
+📊 Capacity Planning Analysis
+================================================================================
+
+🖥️  Node Type: pi
+   Apps: 3
+   Node Capacity: CPU=4.00 Memory=8.00Gi
+
+   CPU Usage:
+     Requests: 850m / 4.00 (21.2%)
+       [████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]
+     Limits:   1.75 / 4.00 (43.8%)
+       [█████████████████░░░░░░░░░░░░░░░░░░░░░░░]
+
+   Memory Usage:
+     Requests: 4.75Gi / 8.00Gi (59.4%)
+       [███████████████████████░░░░░░░░░░░░░░░░░]
+     Limits:   9.50Gi / 8.00Gi (118.8%)
+     ⚠️ [████████████████████████████████████████]
+
+   ✅ Capacity available (40.6% free)
+
+   Apps on this node type:
+     • homebridge: CPU=100m Memory=256.00Mi
+     • plex: CPU=500m Memory=4.00Gi
+     • nginx: CPU=250m Memory=512.00Mi
+```
+
+### Capacity Assumptions
+
+**Important:** Maniforge currently assumes 1 replica per node for capacity planning calculations. This is the typical pattern for:
+- **DaemonSets** - Run exactly one pod per node
+- **Node-pinned deployments** - Deployments with specific node selectors that spread across nodes
+
+**Limitations:**
+- If you have multi-replica deployments targeting the same node type, the capacity analysis will undercount resource usage
+- Future versions may support configurable replica counts or cluster state inspection
+
+**Best Practice:** Use capacity planning as a guideline for node sizing and to identify potential over-allocation. Always monitor actual cluster resource usage in production.
+
 ## 🔮 Future Features
 
 - 🌍 **Remote Platforms** - Load profiles from GitHub repos
-- 📊 **Capacity Planning** - Resource usage analysis
 - 🔄 **Live Diffing** - Compare with running cluster state
 - 📦 **App Templates** - Pre-built app configurations
 - 🎛️ **Advanced Networking** - Service mesh, network policies
