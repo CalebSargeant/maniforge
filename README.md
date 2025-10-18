@@ -455,7 +455,17 @@ nodeSelectors:
      • nginx: CPU=250m Memory=512.00Mi
 ```
 
-**Note:** Maniforge assumes 1 replica per node for apps with specific node selectors, which is the typical pattern for DaemonSets and node-pinned deployments.
+### Capacity Assumptions
+
+**Important:** Maniforge currently assumes 1 replica per node for capacity planning calculations. This is the typical pattern for:
+- **DaemonSets** - Run exactly one pod per node
+- **Node-pinned deployments** - Deployments with specific node selectors that spread across nodes
+
+**Limitations:**
+- If you have multi-replica deployments targeting the same node type, the capacity analysis will undercount resource usage
+- Future versions may support configurable replica counts or cluster state inspection
+
+**Best Practice:** Use capacity planning as a guideline for node sizing and to identify potential over-allocation. Always monitor actual cluster resource usage in production.
 
 ## 🔮 Future Features
 

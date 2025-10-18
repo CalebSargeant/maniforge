@@ -173,8 +173,11 @@ class CapacityPlanner:
                 print(f"     • {app.app_name}: CPU={cpu_req} Memory={mem_req}")
         
         print("\n" + "=" * 80)
-        print("\nNote: Maniforge assumes 1 replica per node for apps with specific node selectors.")
-        print("Capacity analysis is based on resource requests for scheduling decisions.\n")
+        print("\n⚠️  Capacity Planning Notes:")
+        print("   • Assumes 1 replica per node (typical for DaemonSets and node-pinned deployments)")
+        print("   • Multi-replica deployments on the same node type may undercount resources")
+        print("   • Analysis is based on resource requests (used for scheduling decisions)")
+        print("   • Use this as a guideline for node sizing and capacity planning\n")
     
     def _print_usage_bar(self, percentage: float):
         """Print a visual usage bar"""
