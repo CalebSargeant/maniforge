@@ -1,0 +1,241 @@
+# Resource Profiles - Master Definition
+# AWS-style resource allocation profiles for Kubernetes workloads
+# Use this file to generate Kubernetes components or reference in maniforge.yaml
+
+profiles:
+  # P-type (Processing Intensive) - 2:1 CPU:Memory Ratio
+  # Best for: Video transcoding, image processing, mathematical computations, ML inference
+  p.pico:
+    cpu: { requests: "100m", limits: "250m" }
+    memory: { requests: "64Mi", limits: "128Mi" }
+    description: "Tiny processing tasks"
+    
+  p.nano:
+    cpu: { requests: "200m", limits: "500m" }
+    memory: { requests: "128Mi", limits: "256Mi" }
+    description: "Minimal processing"
+    
+  p.micro:
+    cpu: { requests: "300m", limits: "1" }
+    memory: { requests: "192Mi", limits: "512Mi" }
+    description: "Light computations"
+    
+  p.small:
+    cpu: { requests: "500m", limits: "2" }
+    memory: { requests: "256Mi", limits: "1Gi" }
+    description: "Light media processing"
+    
+  p.medium:
+    cpu: { requests: "1", limits: "4" }
+    memory: { requests: "512Mi", limits: "2Gi" }
+    description: "Video processing"
+    
+  p.large:
+    cpu: { requests: "2", limits: "8" }
+    memory: { requests: "1Gi", limits: "4Gi" }
+    description: "Heavy computational tasks"
+    
+  p.xlarge:
+    cpu: { requests: "4", limits: "16" }
+    memory: { requests: "2Gi", limits: "8Gi" }
+    description: "Batch processing"
+    
+  p.2xlarge:
+    cpu: { requests: "8", limits: "32" }
+    memory: { requests: "4Gi", limits: "16Gi" }
+    description: "Large-scale processing"
+
+  # T-type (Burstable) - 1:1 CPU:Memory Ratio
+  # Best for: Web servers, APIs, general-purpose applications
+  t.pico:
+    cpu: { requests: "25m", limits: "100m" }
+    memory: { requests: "32Mi", limits: "128Mi" }
+    description: "Tiny services"
+    
+  t.nano:
+    cpu: { requests: "50m", limits: "200m" }
+    memory: { requests: "64Mi", limits: "256Mi" }
+    description: "Micro services"
+    
+  t.micro:
+    cpu: { requests: "100m", limits: "500m" }
+    memory: { requests: "128Mi", limits: "512Mi" }
+    description: "Small utilities"
+    
+  t.small:
+    cpu: { requests: "250m", limits: "1" }
+    memory: { requests: "256Mi", limits: "1Gi" }
+    description: "Web frontends"
+    
+  t.medium:
+    cpu: { requests: "500m", limits: "2" }
+    memory: { requests: "512Mi", limits: "2Gi" }
+    description: "API services"
+    
+  t.large:
+    cpu: { requests: "1", limits: "4" }
+    memory: { requests: "1Gi", limits: "4Gi" }
+    description: "Medium applications"
+    
+  t.xlarge:
+    cpu: { requests: "2", limits: "8" }
+    memory: { requests: "2Gi", limits: "8Gi" }
+    description: "Large applications"
+    
+  t.2xlarge:
+    cpu: { requests: "4", limits: "16" }
+    memory: { requests: "4Gi", limits: "16Gi" }
+    description: "High-scale services"
+
+  # C-type (Compute Optimized) - 1:2 CPU:Memory Ratio
+  # Best for: CPU-intensive applications, web servers with moderate memory needs
+  c.pico:
+    cpu: { requests: "100m", limits: "250m" }
+    memory: { requests: "256Mi", limits: "512Mi" }
+    description: "Tiny compute tasks"
+    
+  c.nano:
+    cpu: { requests: "150m", limits: "500m" }
+    memory: { requests: "384Mi", limits: "1Gi" }
+    description: "Small compute jobs"
+    
+  c.micro:
+    cpu: { requests: "200m", limits: "750m" }
+    memory: { requests: "512Mi", limits: "1.5Gi" }
+    description: "Light compute workloads"
+    
+  c.small:
+    cpu: { requests: "250m", limits: "1" }
+    memory: { requests: "512Mi", limits: "2Gi" }
+    description: "Load balancers"
+    
+  c.medium:
+    cpu: { requests: "500m", limits: "2" }
+    memory: { requests: "1Gi", limits: "4Gi" }
+    description: "Application servers"
+    
+  c.large:
+    cpu: { requests: "1", limits: "4" }
+    memory: { requests: "2Gi", limits: "8Gi" }
+    description: "High-traffic APIs"
+    
+  c.xlarge:
+    cpu: { requests: "2", limits: "8" }
+    memory: { requests: "4Gi", limits: "16Gi" }
+    description: "Compute clusters"
+    
+  c.2xlarge:
+    cpu: { requests: "4", limits: "16" }
+    memory: { requests: "8Gi", limits: "32Gi" }
+    description: "Heavy compute workloads"
+
+  # M-type (Memory Optimized) - 1:4 CPU:Memory Ratio
+  # Best for: Applications with moderate memory requirements
+  m.pico:
+    cpu: { requests: "100m", limits: "250m" }
+    memory: { requests: "512Mi", limits: "1Gi" }
+    description: "Tiny memory apps"
+    
+  m.nano:
+    cpu: { requests: "150m", limits: "500m" }
+    memory: { requests: "768Mi", limits: "2Gi" }
+    description: "Small memory workloads"
+    
+  m.micro:
+    cpu: { requests: "200m", limits: "750m" }
+    memory: { requests: "1Gi", limits: "3Gi" }
+    description: "Light memory apps"
+    
+  m.small:
+    cpu: { requests: "250m", limits: "1" }
+    memory: { requests: "1Gi", limits: "4Gi" }
+    description: "Small databases"
+    
+  m.medium:
+    cpu: { requests: "500m", limits: "2" }
+    memory: { requests: "2Gi", limits: "8Gi" }
+    description: "Application caches"
+    
+  m.large:
+    cpu: { requests: "1", limits: "4" }
+    memory: { requests: "4Gi", limits: "16Gi" }
+    description: "Medium databases"
+    
+  m.xlarge:
+    cpu: { requests: "2", limits: "8" }
+    memory: { requests: "8Gi", limits: "32Gi" }
+    description: "Large applications"
+    
+  m.2xlarge:
+    cpu: { requests: "4", limits: "16" }
+    memory: { requests: "16Gi", limits: "64Gi" }
+    description: "High-memory applications"
+
+  # R-type (Memory Intensive) - 1:8 CPU:Memory Ratio
+  # Best for: In-memory databases, caches, analytics, large datasets
+  r.pico:
+    cpu: { requests: "100m", limits: "250m" }
+    memory: { requests: "1Gi", limits: "2Gi" }
+    description: "Tiny cache instances"
+    
+  r.nano:
+    cpu: { requests: "150m", limits: "500m" }
+    memory: { requests: "1536Mi", limits: "4Gi" }
+    description: "Small memory stores"
+    
+  r.micro:
+    cpu: { requests: "200m", limits: "750m" }
+    memory: { requests: "2Gi", limits: "6Gi" }
+    description: "Light memory-intensive apps"
+    
+  r.small:
+    cpu: { requests: "250m", limits: "1" }
+    memory: { requests: "2Gi", limits: "8Gi" }
+    description: "Cache instances"
+    
+  r.medium:
+    cpu: { requests: "500m", limits: "2" }
+    memory: { requests: "4Gi", limits: "16Gi" }
+    description: "Search engines"
+    
+  r.large:
+    cpu: { requests: "1", limits: "4" }
+    memory: { requests: "8Gi", limits: "32Gi" }
+    description: "Large databases"
+    
+  r.xlarge:
+    cpu: { requests: "2", limits: "8" }
+    memory: { requests: "16Gi", limits: "64Gi" }
+    description: "Big data analytics"
+    
+  r.2xlarge:
+    cpu: { requests: "4", limits: "16" }
+    memory: { requests: "32Gi", limits: "128Gi" }
+    description: "Massive memory workloads"
+
+# Metadata for profile types
+profile_types:
+  p:
+    name: "Processing Intensive"
+    ratio: "2:1 CPU:Memory"
+    use_cases: "Video transcoding, image processing, mathematical computations, ML inference"
+    
+  t:
+    name: "Burstable"
+    ratio: "1:1 CPU:Memory"
+    use_cases: "Web servers, APIs, general-purpose applications"
+    
+  c:
+    name: "Compute Optimized"
+    ratio: "1:2 CPU:Memory"
+    use_cases: "CPU-intensive applications, web servers with moderate memory needs"
+    
+  m:
+    name: "Memory Optimized"
+    ratio: "1:4 CPU:Memory"
+    use_cases: "Applications with moderate memory requirements"
+    
+  r:
+    name: "Memory Intensive"
+    ratio: "1:8 CPU:Memory"
+    use_cases: "In-memory databases, caches, analytics, large datasets"

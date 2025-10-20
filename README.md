@@ -229,7 +229,21 @@ apps:
 
 ## 🏗️ Resource Profiles
 
-Built-in profiles following AWS naming:
+Maniforge uses `resource-profiles.yaml` as the master definition for all AWS-style resource allocation profiles. It defines CPU and memory requests/limits for different workload types.
+
+### Profile Types
+
+- **P-type** (2:1 CPU:Memory) - Video transcoding, image processing, ML inference
+- **T-type** (1:1 CPU:Memory) - Web servers, APIs, general-purpose applications
+- **C-type** (1:2 CPU:Memory) - Compute-optimized, load balancers
+- **M-type** (1:4 CPU:Memory) - Memory-optimized, balanced workloads
+- **R-type** (1:8 CPU:Memory) - In-memory databases, caches, large datasets
+
+### Profile Sizes
+
+Each type has 8 sizes: `pico`, `nano`, `micro`, `small`, `medium`, `large`, `xlarge`, `2xlarge`
+
+### Built-in Profiles
 
 | Profile | CPU Requests | CPU Limits | Memory Requests | Memory Limits | Use Case |
 |---------|-------------|------------|-----------------|---------------|----------|
@@ -237,6 +251,55 @@ Built-in profiles following AWS naming:
 | `c.small` | 250m | 500m | 512Mi | 1Gi | Small apps |
 | `c.medium` | 500m | 1000m | 1Gi | 2Gi | Medium apps |
 | `r.large` | 500m | 1000m | 4Gi | 8Gi | Memory-intensive |
+
+### Master Definition File
+
+The `resource-profiles.yaml` file:
+- Defines all available resource profiles with CPU/memory requests and limits
+- Can be used to generate Kubernetes component structures
+- Is automatically loaded by maniforge for app configuration
+- Can be customized by users for their own profile definitions
+
+### Generating Kubernetes Components
+
+```bash
+./maniforge generate-profiles --output /path/to/output
+```
+
+This generates:
+- Main `kustomization.yaml` with all profile patches
+- Individual profile directories (e.g., `c.small/`, `r.large/`) containing:
+  - `kustomization.yaml`: Component definition
+  - `patches.yaml`: Resource patches for Deployments/StatefulSets/DaemonSets
+  - `helmrelease-patches.yaml`: Patches for Flux HelmRelease resources
+- `README.md`: Documentation of all available profiles
+
+### Using Custom Resource Profiles
+
+Users can create their own `resource-profiles.yaml` and generate components:
+
+```bash
+./maniforge generate-profiles --profiles-yaml custom-profiles.yaml --output my-components/
+```
+
+### Using Generated Components
+
+**Label-based Selection** (Main Component):
+```yaml
+components:
+  - /path/to/components/resource-profiles
+```
+Then add profile labels to your resources:
+```yaml
+labels:
+  resource-profile: c.small
+```
+
+**Direct Component Reference**:
+```yaml
+components:
+  - /path/to/components/resource-profiles/c.small
+```
 
 ## 🌐 Network Types
 
@@ -394,10 +457,82 @@ git remote add origin git@github.com:calebsargeant/homebrew-tap.git
 git push -u origin main
 ```
 
+## 📊 Capacity Planning
+
+Maniforge now includes built-in capacity planning that analyzes resource usage across your node groups!
+
+When you run `maniforge plan`, you'll see:
+- **CPU and Memory usage** per node type
+- **Visual progress bars** showing capacity utilization
+- **Requests vs Limits** analysis
+- **Over-capacity warnings** when limits exceed node capacity
+- **Per-app resource breakdown**
+
+### Node Capacity Configuration
+
+Define node capacity in your platform configuration:
+
+```yaml
+nodeSelectors:
+  pi:
+    labels:
+      type: pi
+    capacity:
+      cpu: 4000m
+      memory: 8Gi
+  workers:
+    labels:
+      type: worker
+    capacity:
+      cpu: 8000m
+      memory: 16Gi
+```
+
+### Example Output
+
+```
+📊 Capacity Planning Analysis
+================================================================================
+
+🖥️  Node Type: pi
+   Apps: 3
+   Node Capacity: CPU=4.00 Memory=8.00Gi
+
+   CPU Usage:
+     Requests: 850m / 4.00 (21.2%)
+       [████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]
+     Limits:   1.75 / 4.00 (43.8%)
+       [█████████████████░░░░░░░░░░░░░░░░░░░░░░░]
+
+   Memory Usage:
+     Requests: 4.75Gi / 8.00Gi (59.4%)
+       [███████████████████████░░░░░░░░░░░░░░░░░]
+     Limits:   9.50Gi / 8.00Gi (118.8%)
+     ⚠️ [████████████████████████████████████████]
+
+   ✅ Capacity available (40.6% free)
+
+   Apps on this node type:
+     • homebridge: CPU=100m Memory=256.00Mi
+     • plex: CPU=500m Memory=4.00Gi
+     • nginx: CPU=250m Memory=512.00Mi
+```
+
+### Capacity Assumptions
+
+**Important:** Maniforge currently assumes 1 replica per node for capacity planning calculations. This is the typical pattern for:
+- **DaemonSets** - Run exactly one pod per node
+- **Node-pinned deployments** - Deployments with specific node selectors that spread across nodes
+
+**Limitations:**
+- If you have multi-replica deployments targeting the same node type, the capacity analysis will undercount resource usage
+- Future versions may support configurable replica counts or cluster state inspection
+
+**Best Practice:** Use capacity planning as a guideline for node sizing and to identify potential over-allocation. Always monitor actual cluster resource usage in production.
+
 ## 🔮 Future Features
 
 - 🌍 **Remote Platforms** - Load profiles from GitHub repos
-- 📊 **Capacity Planning** - Resource usage analysis
 - 🔄 **Live Diffing** - Compare with running cluster state
 - 📦 **App Templates** - Pre-built app configurations
 - 🎛️ **Advanced Networking** - Service mesh, network policies
