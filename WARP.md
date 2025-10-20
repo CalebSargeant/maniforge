@@ -14,6 +14,7 @@ Maniforge is a Terraform-like tool for managing Kubernetes applications. It tran
 ./maniforge validate                    # Validate configuration only
 ./maniforge plan                        # Show changes (like terraform plan)
 ./maniforge apply                       # Generate manifests (like terraform apply)
+./maniforge generate-profiles           # Generate Kubernetes resource profile components
 ```
 
 ### Installation
@@ -69,6 +70,38 @@ Execute the tool directly on test configurations:
 - **Platform abstraction**: Resource profiles and network types abstract Kubernetes complexity
 - **Declarative**: Like Terraform, defines desired state rather than imperative steps
 - **GitOps-first**: Generates manifests for version control, not direct kubectl apply
+
+## Resource Profiles
+
+### Master Definition File
+
+Maniforge uses `resource-profiles.yaml` as the master definition for all AWS-style resource profiles (p, t, c, m, r types). This file:
+- Defines all available resource profiles with CPU/memory requests and limits
+- Can be used to generate Kubernetes component structures
+- Is automatically loaded by maniforge for app configuration
+- Can be customized by users for their own profile definitions
+
+### Generating Kubernetes Components
+
+```bash
+./maniforge generate-profiles --output /path/to/output
+```
+
+This generates:
+- Main `kustomization.yaml` with all profile patches
+- Individual profile directories (e.g., `c.small/`, `r.large/`) containing:
+  - `kustomization.yaml`: Component definition
+  - `patches.yaml`: Resource patches for Deployments/StatefulSets/DaemonSets
+  - `helmrelease-patches.yaml`: Patches for Flux HelmRelease resources
+- `README.md`: Documentation of all available profiles
+
+### Using Custom Resource Profiles
+
+Users can create their own `resource-profiles.yaml` and generate components:
+
+```bash
+./maniforge generate-profiles --profiles-yaml custom-profiles.yaml --output my-components/
+```
 
 ## Configuration Schema
 
