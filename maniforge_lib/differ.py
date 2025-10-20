@@ -113,8 +113,8 @@ class ManifestDiffer:
             print()
     
     def _get_nested(self, obj: Any, keys: List[str]):
-        """Safely traverse nested dict-like structures using keys.
-        Returns None if any level is missing or not a mapping.
+        """Safely traverse nested dict-like structures.
+        Returns the final value if all keys exist and each level is mapping-like; otherwise returns None.
         """
         cur = obj
         for k in keys:

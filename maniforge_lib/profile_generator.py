@@ -62,10 +62,24 @@ class ProfileGenerator:
                     mem_req = profile_config['memory']['requests']
                     mem_lim = profile_config['memory']['limits']
                     
+                    patch_ops = [
+                        {
+                            'op': 'add',
+                            'path': '/spec/template/spec/containers/0/resources',
+                            'value': {
+                                'requests': {
+                                    'cpu': cpu_req,
+                                    'memory': mem_req,
+                                },
+                                'limits': {
+                                    'cpu': cpu_lim,
+                                    'memory': mem_lim,
+                                },
+                            },
+                        }
+                    ]
                     patch = {
-                        'patch': f"""- op: add
-  path: /spec/template/spec/containers/0/resources
-  value: {{ requests: {{ cpu: {cpu_req}, memory: {mem_req} }}, limits: {{ cpu: {cpu_lim}, memory: {mem_lim} }} }}""",
+                        'patch': yaml.dump(patch_ops, default_flow_style=False, sort_keys=False),
                         'target': {
                             'labelSelector': f"resource-profile={profile_name}"
                         }
