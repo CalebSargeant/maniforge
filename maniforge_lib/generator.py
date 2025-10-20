@@ -6,6 +6,8 @@ import yaml
 from pathlib import Path
 from typing import Dict, Any
 
+from .utils import build_helm_release
+
 
 class ManifestGenerator:
     """Generates Kubernetes manifests"""
@@ -31,29 +33,7 @@ class ManifestGenerator:
             }
             
             helm_chart_config = self.platform_config.get('helmChart', {})
-            helm_release = {
-                'apiVersion': 'helm.toolkit.fluxcd.io/v2beta2',
-                'kind': 'HelmRelease',
-                'metadata': {
-                    'name': app_name,
-                    'namespace': app_config.get('namespace', 'default')
-                },
-                'spec': {
-                    'interval': '1m',
-                    'chart': {
-                        'spec': {
-                            'chart': helm_chart_config.get('name', 'app-template'),
-                            'version': helm_chart_config.get('version', '4.4.0'),
-                            'sourceRef': {
-                                'kind': 'HelmRepository',
-                                'name': helm_chart_config.get('repository', {}).get('name', 'bjw-s'),
-                                'namespace': helm_chart_config.get('repository', {}).get('namespace', 'flux-system')
-                            }
-                        }
-                    },
-                    'values': values
-                }
-            }
+            helm_release = build_helm_release(app_name, app_config, values, helm_chart_config)
             
             app_dir = output_dir / app_name
             app_dir.mkdir(parents=True, exist_ok=True)
