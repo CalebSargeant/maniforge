@@ -175,7 +175,7 @@ class CapacityPlanner:
         print("\n" + "=" * 80)
         print("\n⚠️  Capacity Planning Notes:")
         print("   • Assumes 1 replica per node (typical for DaemonSets and node-pinned deployments)")
-        print("   • Multi-replica deployments on the same node type may undercount resources")
+        print("   • Multi-replica deployments on the same node type may under-count resources")
         print("   • Analysis is based on resource requests (used for scheduling decisions)")
         print("   • Use this as a guideline for node sizing and capacity planning\n")
     

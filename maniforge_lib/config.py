@@ -3,13 +3,16 @@ Configuration loading and validation
 """
 
 import sys
+import os
 import yaml
 from pathlib import Path
 from typing import Dict, Any, List
 from .profile_generator import ProfileGenerator
 
-# Default profile constants
+# Defaults and constants
 DEFAULT_PROFILE_C_SMALL = 'c.small'
+RESOURCE_PROFILES_FILE_ENV = 'MANIFORGE_RESOURCE_PROFILES_YAML'
+RESOURCE_PROFILES_FILENAME = os.getenv(RESOURCE_PROFILES_FILE_ENV, 'resource-profiles.yaml')
 
 
 class ConfigLoader:
@@ -43,8 +46,8 @@ class ConfigLoader:
     
     def _default_platform_config(self):
         """Default platform configuration"""
-        # Try to load resource profiles from YAML file
-        resource_profiles = ProfileGenerator.load_profiles_for_config('resource-profiles.yaml')
+        # Try to load resource profiles from YAML file (configurable via env)
+        resource_profiles = ProfileGenerator.load_profiles_for_config(RESOURCE_PROFILES_FILENAME)
         
         # Fallback to minimal set if file doesn't exist
         if not resource_profiles:

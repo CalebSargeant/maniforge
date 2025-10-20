@@ -5,6 +5,7 @@ Manifest differ for showing changes
 import yaml
 from pathlib import Path
 from typing import Dict, Any, List, Tuple
+from collections.abc import Mapping
 
 from .utils import build_helm_release
 
@@ -111,21 +112,32 @@ class ManifestDiffer:
             
             print()
     
+    def _get_nested(self, obj: Any, keys: List[str]):
+        """Safely traverse nested dict-like structures using keys.
+        Returns None if any level is missing or not a mapping.
+        """
+        cur = obj
+        for k in keys:
+            if not isinstance(cur, Mapping):
+                return None
+            cur = cur.get(k)
+            if cur is None:
+                return None
+        return cur
+    
     def _get_image_from_values(self, values):
         """Extract image from helm values"""
-        try:
-            container = values.get('controllers', {}).get('main', {}).get('containers', {}).get('main', {})
-            image_config = container.get('image', {})
-            repo = image_config.get('repository', '')
-            tag = image_config.get('tag', 'latest')
-            return f"{repo}:{tag}" if repo else "unknown"
-        except (KeyError, AttributeError, TypeError):
+        image_config = self._get_nested(values, ['controllers', 'main', 'containers', 'main', 'image'])
+        if not isinstance(image_config, Mapping):
             return "unknown"
+        repo = image_config.get('repository', '') or ''
+        tag = image_config.get('tag', 'latest') or 'latest'
+        return f"{repo}:{tag}" if repo else "unknown"
     
     def _get_resources_from_values(self, values):
         """Extract resources from helm values"""
-        try:
-            container = values.get('controllers', {}).get('main', {}).get('containers', {}).get('main', {})
-            return container.get('resources', {})
-        except (KeyError, AttributeError, TypeError):
+        container = self._get_nested(values, ['controllers', 'main', 'containers', 'main'])
+        if not isinstance(container, Mapping):
             return {}
+        resources = container.get('resources', {})
+        return resources if isinstance(resources, Mapping) else {}
