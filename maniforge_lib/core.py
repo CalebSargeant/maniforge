@@ -11,6 +11,7 @@ from .translator import AppTranslator
 from .differ import ManifestDiffer
 from .generator import ManifestGenerator
 from .capacity_planner import CapacityPlanner
+from .profile_generator import ProfileGenerator
 
 
 class Maniforge:
@@ -55,7 +56,7 @@ class Maniforge:
         
         differ = ManifestDiffer()
         differ.load_current_state(output_dir)
-        differ.load_desired_state(self, output_dir)
+        differ.load_desired_state(self)
         
         changes = differ.get_changes()
         differ.print_changes(changes)
@@ -86,3 +87,20 @@ class Maniforge:
     def init(config_file: str, cluster_name: str = 'firefly'):
         """Initialize a new maniforge project"""
         ConfigInitializer.init(Path(config_file), cluster_name)
+    
+    @staticmethod
+    def generate_profiles(output_dir: str = None, profiles_yaml: str = 'resource-profiles.yaml'):
+        """Generate Kubernetes resource profile components"""
+        print("📦 Generating resource profile components...")
+        
+        generator = ProfileGenerator(profiles_yaml)
+        try:
+            generator.load_profiles()
+        except FileNotFoundError as e:
+            print(f"❌ {e}")
+            sys.exit(1)
+        
+        if output_dir is None:
+            output_dir = '_components/resource-profiles'
+        
+        generator.generate_components(Path(output_dir))

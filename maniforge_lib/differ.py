@@ -27,7 +27,7 @@ class ManifestDiffer:
                     with open(manifest_file) as f:
                         self.current_state[app_name] = yaml.safe_load(f)
     
-    def load_desired_state(self, generator, output_dir: Path):
+    def load_desired_state(self, generator):
         """Generate desired state in memory"""
         apps = generator.apps_config.get('apps', {})
         cluster_config = generator.apps_config.get('cluster', {})
@@ -103,17 +103,17 @@ class ManifestDiffer:
         for action, app_name, current, desired in changes:
             if action == 'create':
                 print(f"  🟢 {app_name}")
-                print(f"      App will be created")
+                print("      App will be created")
                 print(f"      Image: {self._get_image_from_values(desired.get('spec', {}).get('values', {}))}")
                 print(f"      Namespace: {desired.get('metadata', {}).get('namespace', 'default')}")
                 
             elif action == 'delete':
                 print(f"  🔴 {app_name}")
-                print(f"      App will be deleted")
+                print("      App will be deleted")
                 
             elif action == 'update':
                 print(f"  🟡 {app_name}")
-                print(f"      App will be modified")
+                print("      App will be modified")
                 
                 # Show specific changes
                 current_image = self._get_image_from_values(current.get('spec', {}).get('values', {}))
@@ -127,7 +127,7 @@ class ManifestDiffer:
                 desired_resources = self._get_resources_from_values(desired.get('spec', {}).get('values', {}))
                 
                 if current_resources != desired_resources:
-                    print(f"      Resources will be updated")
+                    print("      Resources will be updated")
             
             print()
     
@@ -139,7 +139,7 @@ class ManifestDiffer:
             repo = image_config.get('repository', '')
             tag = image_config.get('tag', 'latest')
             return f"{repo}:{tag}" if repo else "unknown"
-        except:
+        except (KeyError, AttributeError, TypeError):
             return "unknown"
     
     def _get_resources_from_values(self, values):
@@ -147,5 +147,5 @@ class ManifestDiffer:
         try:
             container = values.get('controllers', {}).get('main', {}).get('containers', {}).get('main', {})
             return container.get('resources', {})
-        except:
+        except (KeyError, AttributeError, TypeError):
             return {}

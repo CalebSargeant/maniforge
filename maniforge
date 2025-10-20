@@ -33,6 +33,11 @@ def main():
     # validate command
     subparsers.add_parser('validate', help='Validate configuration')
     
+    # generate-profiles command
+    gen_profiles_parser = subparsers.add_parser('generate-profiles', help='Generate Kubernetes resource profile components')
+    gen_profiles_parser.add_argument('--output', '-o', help='Output directory (default: _components/resource-profiles)')
+    gen_profiles_parser.add_argument('--profiles-yaml', default='resource-profiles.yaml', help='Resource profiles YAML file')
+    
     args = parser.parse_args()
     
     if not args.command:
@@ -41,6 +46,10 @@ def main():
     
     if args.command == 'init':
         Maniforge.init(args.config, args.cluster)
+        return
+    
+    if args.command == 'generate-profiles':
+        Maniforge.generate_profiles(args.output, args.profiles_yaml)
         return
     
     maniforge = Maniforge(args.config)

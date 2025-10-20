@@ -141,7 +141,7 @@ class CapacityPlanner:
             print()
             
             # CPU Analysis
-            print(f"   CPU Usage:")
+            print("   CPU Usage:")
             print(f"     Requests: {usage['cpu_request'].format_cpu()} / {capacity.cpu.format_cpu()} ({percentages['cpu_request']:.1f}%)")
             self._print_usage_bar(percentages['cpu_request'])
             print(f"     Limits:   {usage['cpu_limit'].format_cpu()} / {capacity.cpu.format_cpu()} ({percentages['cpu_limit']:.1f}%)")
@@ -149,7 +149,7 @@ class CapacityPlanner:
             print()
             
             # Memory Analysis
-            print(f"   Memory Usage:")
+            print("   Memory Usage:")
             print(f"     Requests: {usage['memory_request'].format_memory()} / {capacity.memory.format_memory()} ({percentages['memory_request']:.1f}%)")
             self._print_usage_bar(percentages['memory_request'])
             print(f"     Limits:   {usage['memory_limit'].format_memory()} / {capacity.memory.format_memory()} ({percentages['memory_limit']:.1f}%)")
@@ -166,7 +166,7 @@ class CapacityPlanner:
                 print(f"   ✅ Capacity available ({100 - max_request_pct:.1f}% free)")
             
             # List apps
-            print(f"\n   Apps on this node type:")
+            print("\n   Apps on this node type:")
             for app in apps:
                 cpu_req = app.resources.cpu_request.format_cpu()
                 mem_req = app.resources.memory_request.format_memory()

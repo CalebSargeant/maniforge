@@ -6,6 +6,10 @@ import sys
 import yaml
 from pathlib import Path
 from typing import Dict, Any, List
+from .profile_generator import ProfileGenerator
+
+# Default profile constants
+DEFAULT_PROFILE_C_SMALL = 'c.small'
 
 
 class ConfigLoader:
@@ -39,12 +43,23 @@ class ConfigLoader:
     
     def _default_platform_config(self):
         """Default platform configuration"""
+        # Try to load resource profiles from YAML file
+        resource_profiles = ProfileGenerator.load_profiles_for_config('resource-profiles.yaml')
+        
+        # Fallback to minimal set if file doesn't exist
+        if not resource_profiles:
+            # Define constants for fallback profiles
+            PROFILE_C_PICO = 'c.pico'
+            PROFILE_R_LARGE = 'r.large'
+            
+            resource_profiles = {
+                PROFILE_C_PICO: {'cpu': {'requests': '100m', 'limits': '250m'}, 'memory': {'requests': '256Mi', 'limits': '512Mi'}},
+                DEFAULT_PROFILE_C_SMALL: {'cpu': {'requests': '250m', 'limits': '500m'}, 'memory': {'requests': '512Mi', 'limits': '1Gi'}},
+                PROFILE_R_LARGE: {'cpu': {'requests': '500m', 'limits': '1000m'}, 'memory': {'requests': '4Gi', 'limits': '8Gi'}}
+            }
+        
         return {
-            'resourceProfiles': {
-                'c.pico': {'cpu': {'requests': '100m', 'limits': '250m'}, 'memory': {'requests': '256Mi', 'limits': '512Mi'}},
-                'c.small': {'cpu': {'requests': '250m', 'limits': '500m'}, 'memory': {'requests': '512Mi', 'limits': '1Gi'}},
-                'r.large': {'cpu': {'requests': '500m', 'limits': '1000m'}, 'memory': {'requests': '4Gi', 'limits': '8Gi'}}
-            },
+            'resourceProfiles': resource_profiles,
             'networkTypes': {
                 'clusterip': {'service': {'type': 'ClusterIP'}, 'podOptions': {}},
                 'nodeport': {'service': {'type': 'NodePort'}, 'podOptions': {}},
@@ -118,7 +133,7 @@ class ConfigInitializer:
                 'name': cluster_name,
                 'domain': 'example.com',
                 'defaults': {
-                    'profile': 'c.small',
+                    'profile': DEFAULT_PROFILE_C_SMALL,
                     'nodeSelector': 'pi'
                 }
             },
@@ -130,7 +145,7 @@ class ConfigInitializer:
                     'image': 'nginx:latest',
                     'type': 'deployment',
                     'network': 'clusterip',
-                    'profile': 'c.small'
+                    'profile': DEFAULT_PROFILE_C_SMALL
                 }
             }
         }

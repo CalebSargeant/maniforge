@@ -229,7 +229,21 @@ apps:
 
 ## 🏗️ Resource Profiles
 
-Built-in profiles following AWS naming:
+Maniforge uses `resource-profiles.yaml` as the master definition for all AWS-style resource allocation profiles. It defines CPU and memory requests/limits for different workload types.
+
+### Profile Types
+
+- **P-type** (2:1 CPU:Memory) - Video transcoding, image processing, ML inference
+- **T-type** (1:1 CPU:Memory) - Web servers, APIs, general-purpose applications
+- **C-type** (1:2 CPU:Memory) - Compute-optimized, load balancers
+- **M-type** (1:4 CPU:Memory) - Memory-optimized, balanced workloads
+- **R-type** (1:8 CPU:Memory) - In-memory databases, caches, large datasets
+
+### Profile Sizes
+
+Each type has 8 sizes: `pico`, `nano`, `micro`, `small`, `medium`, `large`, `xlarge`, `2xlarge`
+
+### Built-in Profiles
 
 | Profile | CPU Requests | CPU Limits | Memory Requests | Memory Limits | Use Case |
 |---------|-------------|------------|-----------------|---------------|----------|
@@ -237,6 +251,55 @@ Built-in profiles following AWS naming:
 | `c.small` | 250m | 500m | 512Mi | 1Gi | Small apps |
 | `c.medium` | 500m | 1000m | 1Gi | 2Gi | Medium apps |
 | `r.large` | 500m | 1000m | 4Gi | 8Gi | Memory-intensive |
+
+### Master Definition File
+
+The `resource-profiles.yaml` file:
+- Defines all available resource profiles with CPU/memory requests and limits
+- Can be used to generate Kubernetes component structures
+- Is automatically loaded by maniforge for app configuration
+- Can be customized by users for their own profile definitions
+
+### Generating Kubernetes Components
+
+```bash
+./maniforge generate-profiles --output /path/to/output
+```
+
+This generates:
+- Main `kustomization.yaml` with all profile patches
+- Individual profile directories (e.g., `c.small/`, `r.large/`) containing:
+  - `kustomization.yaml`: Component definition
+  - `patches.yaml`: Resource patches for Deployments/StatefulSets/DaemonSets
+  - `helmrelease-patches.yaml`: Patches for Flux HelmRelease resources
+- `README.md`: Documentation of all available profiles
+
+### Using Custom Resource Profiles
+
+Users can create their own `resource-profiles.yaml` and generate components:
+
+```bash
+./maniforge generate-profiles --profiles-yaml custom-profiles.yaml --output my-components/
+```
+
+### Using Generated Components
+
+**Label-based Selection** (Main Component):
+```yaml
+components:
+  - /path/to/components/resource-profiles
+```
+Then add profile labels to your resources:
+```yaml
+labels:
+  resource-profile: c.small
+```
+
+**Direct Component Reference**:
+```yaml
+components:
+  - /path/to/components/resource-profiles/c.small
+```
 
 ## 🌐 Network Types
 
