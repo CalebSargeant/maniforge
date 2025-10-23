@@ -15,8 +15,22 @@ class CapacityPlanner:
         self.node_selectors = platform_config.get('nodeSelectors', {})
         self.resource_profiles = platform_config.get('resourceProfiles', {})
     
-    def get_node_capacity(self, node_selector: str) -> NodeCapacity:
-        """Get capacity for a node type"""
+    def get_node_capacity(self, node_selector: str, apps_config: Dict[str, Any]) -> NodeCapacity:
+        """Get capacity for a node type, preferring maniforge.yaml 'nodes' overrides"""
+        # Prefer capacities defined in maniforge.yaml under 'nodes'
+        nodes_cfg = apps_config.get('nodes', {}) if apps_config else {}
+        cfg = nodes_cfg.get(node_selector, {})
+        if cfg:
+            cpu_val = cfg.get('cpu', cfg.get('cores'))  # allow alias 'cores'
+            mem_val = cfg.get('memory', cfg.get('mem'))
+            disk_val = cfg.get('disk')
+            count = int(cfg.get('count', 1))
+            cpu = ResourceAmount.parse_cpu(str(cpu_val)) if cpu_val is not None else ResourceAmount.parse_cpu('4000m')
+            memory = ResourceAmount.parse_memory(str(mem_val)) if mem_val is not None else ResourceAmount.parse_memory('8Gi')
+            disk = ResourceAmount.parse_memory(str(disk_val)) if disk_val is not None else None
+            return NodeCapacity(cpu=cpu, memory=memory, node_type=node_selector, count=count, disk=disk)
+        
+        # Fallback to platform 'nodeSelectors' capacities
         node_config = self.node_selectors.get(node_selector, {})
         capacity = node_config.get('capacity', {})
         
@@ -25,13 +39,15 @@ class CapacityPlanner:
             return NodeCapacity(
                 cpu=ResourceAmount.parse_cpu('4000m'),
                 memory=ResourceAmount.parse_memory('8Gi'),
-                node_type=node_selector
+                node_type=node_selector,
+                count=1,
             )
         
         return NodeCapacity(
             cpu=ResourceAmount.parse_cpu(capacity.get('cpu', '4000m')),
             memory=ResourceAmount.parse_memory(capacity.get('memory', '8Gi')),
-            node_type=node_selector
+            node_type=node_selector,
+            count=int(capacity.get('count', 1))
         )
     
     def get_app_resources(self, app_name: str, app_config: Dict[str, Any], 
@@ -58,9 +74,8 @@ class CapacityPlanner:
         # Determine node selector
         node_selector = app_config.get('nodeSelector', cluster_config.get('defaults', {}).get('nodeSelector', 'default'))
         
-        # Determine replicas - for daemonset, assume 1 per node
-        # For deployment/statefulset with node selector, assume 1 replica per node
-        replicas = 1  # Default assumption: 1 replica per node
+        # Default assumption: replicas will be set to node count during analysis
+        replicas = 1
         
         return AppResources(
             app_name=app_name,
@@ -86,21 +101,28 @@ class CapacityPlanner:
         analysis = {}
         
         for node_selector, apps_list in apps_by_node.items():
-            capacity = self.get_node_capacity(node_selector)
+            capacity = self.get_node_capacity(node_selector, apps_config)
             
-            # Calculate total requests and limits
-            total_cpu_request = sum(app.resources.cpu_request.value for app in apps_list)
-            total_cpu_limit = sum(app.resources.cpu_limit.value for app in apps_list)
-            total_memory_request = sum(app.resources.memory_request.value for app in apps_list)
-            total_memory_limit = sum(app.resources.memory_limit.value for app in apps_list)
+            # Effective replicas assumption: 1 per node for each app on this node type
+            effective_replicas = max(1, capacity.count)
+            
+            # Calculate total requests and limits across all replicas
+            total_cpu_request = sum(app.resources.cpu_request.value for app in apps_list) * effective_replicas
+            total_cpu_limit = sum(app.resources.cpu_limit.value for app in apps_list) * effective_replicas
+            total_memory_request = sum(app.resources.memory_request.value for app in apps_list) * effective_replicas
+            total_memory_limit = sum(app.resources.memory_limit.value for app in apps_list) * effective_replicas
+            
+            # Total capacity across all nodes in this group
+            total_cpu_capacity = capacity.cpu.value * effective_replicas
+            total_memory_capacity = capacity.memory.value * effective_replicas
             
             # Calculate percentages based on requests (more important for scheduling)
-            cpu_request_pct = (total_cpu_request / capacity.cpu.value) * 100
-            memory_request_pct = (total_memory_request / capacity.memory.value) * 100
+            cpu_request_pct = (total_cpu_request / total_cpu_capacity) * 100 if total_cpu_capacity else 0
+            memory_request_pct = (total_memory_request / total_memory_capacity) * 100 if total_memory_capacity else 0
             
             # Calculate percentages based on limits
-            cpu_limit_pct = (total_cpu_limit / capacity.cpu.value) * 100
-            memory_limit_pct = (total_memory_limit / capacity.memory.value) * 100
+            cpu_limit_pct = (total_cpu_limit / total_cpu_capacity) * 100 if total_cpu_capacity else 0
+            memory_limit_pct = (total_memory_limit / total_memory_capacity) * 100 if total_memory_capacity else 0
             
             analysis[node_selector] = {
                 'capacity': capacity,
@@ -110,6 +132,8 @@ class CapacityPlanner:
                     'cpu_limit': ResourceAmount(total_cpu_limit, ''),
                     'memory_request': ResourceAmount(total_memory_request, ''),
                     'memory_limit': ResourceAmount(total_memory_limit, ''),
+                    'total_cpu_capacity': ResourceAmount(total_cpu_capacity, ''),
+                    'total_memory_capacity': ResourceAmount(total_memory_capacity, ''),
                 },
                 'percentages': {
                     'cpu_request': cpu_request_pct,
@@ -136,23 +160,29 @@ class CapacityPlanner:
             apps = data['apps']
             
             print(f"\n🖥️  Node Type: {node_selector}")
+            print(f"   Nodes: {capacity.count}")
+            print(f"   Per-node Capacity: CPU={capacity.cpu.format_cpu()} Memory={capacity.memory.format_memory()}")
+            total_cpu_cap = usage['total_cpu_capacity'].format_cpu()
+            total_mem_cap = usage['total_memory_capacity'].format_memory()
+            print(f"   Total Capacity: CPU={total_cpu_cap} Memory={total_mem_cap}")
+            if capacity.disk:
+                print(f"   Disk (per node): {capacity.disk.format_memory()}")
             print(f"   Apps: {len(apps)}")
-            print(f"   Node Capacity: CPU={capacity.cpu.format_cpu()} Memory={capacity.memory.format_memory()}")
             print()
             
             # CPU Analysis
             print("   CPU Usage:")
-            print(f"     Requests: {usage['cpu_request'].format_cpu()} / {capacity.cpu.format_cpu()} ({percentages['cpu_request']:.1f}%)")
+            print(f"     Requests: {usage['cpu_request'].format_cpu()} / {total_cpu_cap} ({percentages['cpu_request']:.1f}%)")
             self._print_usage_bar(percentages['cpu_request'])
-            print(f"     Limits:   {usage['cpu_limit'].format_cpu()} / {capacity.cpu.format_cpu()} ({percentages['cpu_limit']:.1f}%)")
+            print(f"     Limits:   {usage['cpu_limit'].format_cpu()} / {total_cpu_cap} ({percentages['cpu_limit']:.1f}%)")
             self._print_usage_bar(percentages['cpu_limit'])
             print()
             
             # Memory Analysis
             print("   Memory Usage:")
-            print(f"     Requests: {usage['memory_request'].format_memory()} / {capacity.memory.format_memory()} ({percentages['memory_request']:.1f}%)")
+            print(f"     Requests: {usage['memory_request'].format_memory()} / {total_mem_cap} ({percentages['memory_request']:.1f}%)")
             self._print_usage_bar(percentages['memory_request'])
-            print(f"     Limits:   {usage['memory_limit'].format_memory()} / {capacity.memory.format_memory()} ({percentages['memory_limit']:.1f}%)")
+            print(f"     Limits:   {usage['memory_limit'].format_memory()} / {total_mem_cap} ({percentages['memory_limit']:.1f}%)")
             self._print_usage_bar(percentages['memory_limit'])
             print()
             
@@ -174,7 +204,7 @@ class CapacityPlanner:
         
         print("\n" + "=" * 80)
         print("\n⚠️  Capacity Planning Notes:")
-        print("   • Assumes 1 replica per node (typical for DaemonSets and node-pinned deployments)")
+        print("   • Assumes 1 replica per node for each app on a node type (DaemonSets and node-pinned deployments)")
         print("   • Multi-replica deployments on the same node type may under-count resources")
         print("   • Analysis is based on resource requests (used for scheduling decisions)")
         print("   • Use this as a guideline for node sizing and capacity planning\n")
