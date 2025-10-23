@@ -25,36 +25,48 @@ class ConfigLoader:
         self.apps_config = None
     
     def load(self):
-        """Load maniforge configuration"""
+        """Load maniforge configuration (single-file only)"""
         if not self.config_file.exists():
             print(f"❌ Configuration file not found: {self.config_file}")
             print("Run 'maniforge init' to create a new configuration")
             sys.exit(1)
         
         with open(self.config_file) as f:
-            self.config = yaml.safe_load(f)
+            self.config = yaml.safe_load(f) or {}
         
-        # Load platform config (could be remote in the future)
-        platform_file = Path(self.config.get('platform', {}).get('file', 'platform.yaml'))
-        if platform_file.exists():
-            with open(platform_file) as f:
-                self.platform_config = yaml.safe_load(f)
-        else:
-            self.platform_config = self._default_platform_config()
+        # Always use built-in defaults; do not load external platform files
+        self.platform_config = self._default_platform_config()
+        
+        # Apply optional overrides from maniforge.yaml top-level keys
+        overrides_keys = ['resourceProfiles', 'networkTypes', 'ingressDefaults', 'helmChart', 'nodeSelectors']
+        for key in overrides_keys:
+            if key in self.config:
+                # Shallow merge is fine; structures are dicts
+                existing = self.platform_config.get(key, {})
+                incoming = self.config.get(key, {})
+                if isinstance(existing, dict) and isinstance(incoming, dict):
+                    existing.update(incoming)
+                    self.platform_config[key] = existing
+                else:
+                    self.platform_config[key] = incoming
+        
+        # Auto-generate nodeSelectors from top-level 'nodes' for scheduling labels
+        nodes_cfg = self.config.get('nodes', {}) or {}
+        node_selectors = self.platform_config.setdefault('nodeSelectors', {})
+        for node_name in nodes_cfg.keys():
+            node_selectors.setdefault(node_name, {'labels': {'type': node_name}})
         
         self.apps_config = self.config
     
     def _default_platform_config(self):
-        """Default platform configuration"""
+        """Default settings used by maniforge (no external platform file)"""
         # Try to load resource profiles from YAML file (configurable via env)
         resource_profiles = ProfileGenerator.load_profiles_for_config(RESOURCE_PROFILES_FILENAME)
         
         # Fallback to minimal set if file doesn't exist
         if not resource_profiles:
-            # Define constants for fallback profiles
             PROFILE_C_PICO = 'c.pico'
             PROFILE_R_LARGE = 'r.large'
-            
             resource_profiles = {
                 PROFILE_C_PICO: {'cpu': {'requests': '100m', 'limits': '250m'}, 'memory': {'requests': '256Mi', 'limits': '512Mi'}},
                 DEFAULT_PROFILE_C_SMALL: {'cpu': {'requests': '250m', 'limits': '500m'}, 'memory': {'requests': '512Mi', 'limits': '1Gi'}},
@@ -66,11 +78,10 @@ class ConfigLoader:
             'networkTypes': {
                 'clusterip': {'service': {'type': 'ClusterIP'}, 'podOptions': {}},
                 'nodeport': {'service': {'type': 'NodePort'}, 'podOptions': {}},
+                'loadbalancer': {'service': {'type': 'LoadBalancer'}, 'podOptions': {}},
                 'host': {'service': {'type': 'ClusterIP'}, 'podOptions': {'hostNetwork': True, 'dnsPolicy': 'ClusterFirstWithHostNet'}}
             },
-            'nodeSelectors': {
-                'pi': {'labels': {'type': 'pi'}, 'capacity': {'cpu': '4000m', 'memory': '8Gi'}}
-            },
+            'nodeSelectors': {},
             'ingressDefaults': {
                 'className': 'traefik',
                 'annotations': {
@@ -95,6 +106,7 @@ class ConfigValidator:
         errors = []
         apps = self.apps_config.get('apps', {})
         cluster_config = self.apps_config.get('cluster', {})
+        nodes_cfg = self.apps_config.get('nodes', {})
         
         for app_name, app_config in apps.items():
             if 'image' not in app_config:
@@ -107,6 +119,27 @@ class ConfigValidator:
             network = app_config.get('network', 'clusterip')
             if network not in self.platform_config.get('networkTypes', {}):
                 errors.append(f"App '{app_name}': unknown network type '{network}'")
+            
+            # Validate node selector exists either in platform nodeSelectors or nodes override
+            node_selector = app_config.get('nodeSelector', cluster_config.get('defaults', {}).get('nodeSelector'))
+            if node_selector:
+                if node_selector not in self.platform_config.get('nodeSelectors', {}) and node_selector not in nodes_cfg:
+                    errors.append(f"App '{app_name}': unknown nodeSelector '{node_selector}' (define in top-level nodes)")
+        
+        # Basic nodes config validation (optional)
+        for node_name, node_spec in nodes_cfg.items():
+            if not isinstance(node_spec, dict):
+                errors.append(f"nodes.{node_name}: must be a mapping with keys like count/cpu/memory")
+                continue
+            # Validate count is int-like if provided
+            if 'count' in node_spec:
+                try:
+                    int(node_spec['count'])
+                except Exception:
+                    errors.append(f"nodes.{node_name}.count must be an integer")
+            # Validate at least one of cpu/memory present
+            if not any(k in node_spec for k in ('cpu', 'cores', 'memory', 'mem')):
+                errors.append(f"nodes.{node_name}: specify at least 'cpu' and 'memory' (or aliases 'cores'/'mem') for accurate capacity analysis")
         
         if errors:
             print("❌ VALIDATION ERRORS:")
@@ -128,10 +161,6 @@ class ConfigInitializer:
             sys.exit(1)
         
         config = {
-            'platform': {
-                'source': 'built-in',
-                'version': 'v1.0.0'
-            },
             'cluster': {
                 'name': cluster_name,
                 'domain': 'example.com',
@@ -149,6 +178,13 @@ class ConfigInitializer:
                     'type': 'deployment',
                     'network': 'clusterip',
                     'profile': DEFAULT_PROFILE_C_SMALL
+                }
+            },
+            'nodes': {
+                'pi': {
+                    'count': 1,
+                    'cpu': 4,
+                    'mem': '8Gi'
                 }
             }
         }

@@ -34,8 +34,8 @@ Execute the tool directly on test configurations:
 
 **Maniforge class** (`maniforge` script, lines 377-580)
 - Main orchestrator handling command execution
-- Loads `maniforge.yaml` configuration and platform configuration
-- Provides default platform config with resource profiles, network types, and node selectors
+- Loads `maniforge.yaml` configuration (single file)
+- Provides built-in defaults for resource profiles and network types; node selectors are derived from `nodes`
 - Commands: `init`, `plan`, `apply`, `validate`
 
 **AppTranslator class** (lines 163-375)
@@ -57,7 +57,7 @@ Execute the tool directly on test configurations:
 
 ### Configuration Flow
 
-1. **Input**: `maniforge.yaml` contains platform settings, cluster config, and app definitions
+1. **Input**: `maniforge.yaml` contains cluster config, nodes, and app definitions
 2. **Translation**: AppTranslator converts high-level configs to bjw-s-app-template values
 3. **Generation**: Creates directory structure under `apps/` with:
    - `kustomization.yaml`: Kustomize configuration referencing helm-release
@@ -67,7 +67,7 @@ Execute the tool directly on test configurations:
 ### Key Design Patterns
 
 - **Deep merge**: Configurations are layered (profile + nodeSelector + network + storage + ingress) using recursive dict merge
-- **Platform abstraction**: Resource profiles and network types abstract Kubernetes complexity
+- **Built-in abstraction**: Resource profiles and network types abstract Kubernetes complexity
 - **Declarative**: Like Terraform, defines desired state rather than imperative steps
 - **GitOps-first**: Generates manifests for version control, not direct kubectl apply
 
@@ -107,8 +107,8 @@ Users can create their own `resource-profiles.yaml` and generate components:
 
 ### maniforge.yaml Structure
 ```yaml
-platform:       # Platform source (built-in or future: remote)
 cluster:        # Cluster-wide settings (name, domain, defaults)
+nodes:          # Node groups with counts and capacities
 output:         # Output directory for generated manifests
 apps:           # App definitions (the main content)
 ```
@@ -116,7 +116,7 @@ apps:           # App definitions (the main content)
 ### App Definition Fields
 - **Required**: `image`
 - **Optional**: `type` (deployment/daemonset/statefulset), `network`, `profile`, `nodeSelector`, `namespace`, `ports`, `storage`, `env`, `ingress`
-- Default values come from `cluster.defaults` or platform defaults
+- Default values come from `cluster.defaults` or built-in defaults
 
 ## Code Modification Guidelines
 

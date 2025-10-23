@@ -2,7 +2,7 @@
 Data models and types for Maniforge
 """
 
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from dataclasses import dataclass
 
 
@@ -77,6 +77,8 @@ class NodeCapacity:
     cpu: ResourceAmount
     memory: ResourceAmount
     node_type: str
+    count: int = 1
+    disk: Optional[ResourceAmount] = None
 
 
 @dataclass

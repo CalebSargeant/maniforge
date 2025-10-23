@@ -81,13 +81,9 @@ git push  # Flux/ArgoCD picks up changes
 
 ## 📋 Configuration Format
 
-**`maniforge.yaml`** - Your infrastructure as code:
+**`maniforge.yaml`** - Your infrastructure as code (single file):
 
 ```yaml
-platform:
-  source: built-in
-  version: v1.0.0
-
 cluster:
   name: homelab
   domain: sargeant.co
@@ -97,6 +93,12 @@ cluster:
 
 output:
   directory: apps
+
+nodes:
+  pi:
+    count: 2
+    cpu: 4
+    mem: 16Gi
 
 apps:
   homebridge:
@@ -470,22 +472,15 @@ When you run `maniforge plan`, you'll see:
 
 ### Node Capacity Configuration
 
-Define node capacity in your platform configuration:
+Define capacity at the top level in `maniforge.yaml`:
 
 ```yaml
-nodeSelectors:
+nodes:
   pi:
-    labels:
-      type: pi
-    capacity:
-      cpu: 4000m
-      memory: 8Gi
-  workers:
-    labels:
-      type: worker
-    capacity:
-      cpu: 8000m
-      memory: 16Gi
+    count: 2      # number of nodes of this type
+    cpu: 4        # per-node CPU (cores or millicores, e.g. 4000m)
+    mem: 16Gi     # per-node memory (alias: memory)
+    disk: 100Gi   # optional, informational
 ```
 
 ### Example Output
