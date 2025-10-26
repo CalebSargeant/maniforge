@@ -233,6 +233,30 @@ apps:
 
 Maniforge uses `resource-profiles.yaml` as the master definition for all AWS-style resource allocation profiles. It defines CPU and memory requests/limits for different workload types.
 
+### Pre-Generated Profiles
+
+**✨ New:** This repository now includes **pre-generated Kubernetes resource profiles** in the `_components/resource-profiles` directory!
+
+You can directly reference these profiles in your Kustomize configurations without needing to generate them yourself. The pre-generated profiles include:
+- 40 profile variations across 5 types (P, T, C, M, R) and 8 sizes
+- Ready-to-use Kustomize components for Deployments, StatefulSets, and DaemonSets
+- HelmRelease patches for Flux CD integrations
+- Full documentation in `_components/resource-profiles/README.md`
+
+**Quick Start:**
+```yaml
+# In your kustomization.yaml
+components:
+  - https://github.com/calebsargeant/maniforge/_components/resource-profiles
+```
+
+Then add profile labels to your workloads:
+```yaml
+metadata:
+  labels:
+    resource-profile: c.small
+```
+
 ### Profile Types
 
 - **P-type** (2:1 CPU:Memory) - Video transcoding, image processing, ML inference
@@ -262,7 +286,9 @@ The `resource-profiles.yaml` file:
 - Is automatically loaded by maniforge for app configuration
 - Can be customized by users for their own profile definitions
 
-### Generating Kubernetes Components
+### Generating Custom Kubernetes Components
+
+If you want to generate profiles from a custom `resource-profiles.yaml`:
 
 ```bash
 ./maniforge generate-profiles --output /path/to/output
@@ -276,31 +302,46 @@ This generates:
   - `helmrelease-patches.yaml`: Patches for Flux HelmRelease resources
 - `README.md`: Documentation of all available profiles
 
-### Using Custom Resource Profiles
+**Note:** The default profiles are already pre-generated in `_components/resource-profiles`, so you only need to run this command if you're creating custom profiles.
 
-Users can create their own `resource-profiles.yaml` and generate components:
+### Using Pre-Generated or Custom Profiles
+
+**Option 1: Use Pre-Generated Profiles (Recommended)**
+
+Reference the pre-generated profiles directly from this repository:
+
+```yaml
+# Label-based selection (applies to resources with matching labels)
+components:
+  - https://github.com/calebsargeant/maniforge/_components/resource-profiles
+
+# Or use a specific profile directly
+components:
+  - https://github.com/calebsargeant/maniforge/_components/resource-profiles/c.small
+```
+
+**Option 2: Use Local Copy**
+
+If you've cloned this repository or want to use profiles locally:
+
+```yaml
+components:
+  - ../../_components/resource-profiles
+```
+
+Then add profile labels to your resources:
+```yaml
+metadata:
+  labels:
+    resource-profile: m.medium
+```
+
+**Option 3: Generate Custom Profiles**
+
+Create your own `resource-profiles.yaml` and generate components:
 
 ```bash
 ./maniforge generate-profiles --profiles-yaml custom-profiles.yaml --output my-components/
-```
-
-### Using Generated Components
-
-**Label-based Selection** (Main Component):
-```yaml
-components:
-  - /path/to/components/resource-profiles
-```
-Then add profile labels to your resources:
-```yaml
-labels:
-  resource-profile: c.small
-```
-
-**Direct Component Reference**:
-```yaml
-components:
-  - /path/to/components/resource-profiles/c.small
 ```
 
 ## 🌐 Network Types
