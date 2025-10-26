@@ -247,7 +247,7 @@ You can directly reference these profiles in your Kustomize configurations witho
 ```yaml
 # In your kustomization.yaml
 components:
-  - https://github.com/calebsargeant/maniforge/_components/resource-profiles
+  - https://github.com/calebsargeant/maniforge/_components/resource-profiles?ref=main
 ```
 
 Then add profile labels to your workloads:
@@ -313,11 +313,11 @@ Reference the pre-generated profiles directly from this repository:
 ```yaml
 # Label-based selection (applies to resources with matching labels)
 components:
-  - https://github.com/calebsargeant/maniforge/_components/resource-profiles
+  - https://github.com/calebsargeant/maniforge/_components/resource-profiles?ref=main
 
 # Or use a specific profile directly
 components:
-  - https://github.com/calebsargeant/maniforge/_components/resource-profiles/c.small
+  - https://github.com/calebsargeant/maniforge/_components/resource-profiles/c.small?ref=main
 ```
 
 **Option 2: Use Local Copy**
