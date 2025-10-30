@@ -1,0 +1,203 @@
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+patches:
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 100m\n      memory: 64Mi\n    limits:\n      cpu: 250m\n\
+    \      memory: 128Mi\n"
+  target:
+    labelSelector: resource-profile=p.pico
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 200m\n      memory: 128Mi\n    limits:\n      cpu:\
+    \ 500m\n      memory: 256Mi\n"
+  target:
+    labelSelector: resource-profile=p.nano
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 300m\n      memory: 192Mi\n    limits:\n      cpu:\
+    \ '1'\n      memory: 512Mi\n"
+  target:
+    labelSelector: resource-profile=p.micro
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 500m\n      memory: 256Mi\n    limits:\n      cpu:\
+    \ '2'\n      memory: 1Gi\n"
+  target:
+    labelSelector: resource-profile=p.small
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '1'\n      memory: 512Mi\n    limits:\n      cpu: '4'\n\
+    \      memory: 2Gi\n"
+  target:
+    labelSelector: resource-profile=p.medium
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '2'\n      memory: 1Gi\n    limits:\n      cpu: '8'\n\
+    \      memory: 4Gi\n"
+  target:
+    labelSelector: resource-profile=p.large
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '4'\n      memory: 2Gi\n    limits:\n      cpu: '16'\n\
+    \      memory: 8Gi\n"
+  target:
+    labelSelector: resource-profile=p.xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '8'\n      memory: 4Gi\n    limits:\n      cpu: '32'\n\
+    \      memory: 16Gi\n"
+  target:
+    labelSelector: resource-profile=p.2xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 25m\n      memory: 32Mi\n    limits:\n      cpu: 100m\n\
+    \      memory: 128Mi\n"
+  target:
+    labelSelector: resource-profile=t.pico
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 50m\n      memory: 64Mi\n    limits:\n      cpu: 200m\n\
+    \      memory: 256Mi\n"
+  target:
+    labelSelector: resource-profile=t.nano
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 100m\n      memory: 128Mi\n    limits:\n      cpu:\
+    \ 500m\n      memory: 512Mi\n"
+  target:
+    labelSelector: resource-profile=t.micro
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 250m\n      memory: 256Mi\n    limits:\n      cpu:\
+    \ '1'\n      memory: 1Gi\n"
+  target:
+    labelSelector: resource-profile=t.small
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 500m\n      memory: 512Mi\n    limits:\n      cpu:\
+    \ '2'\n      memory: 2Gi\n"
+  target:
+    labelSelector: resource-profile=t.medium
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '1'\n      memory: 1Gi\n    limits:\n      cpu: '4'\n\
+    \      memory: 4Gi\n"
+  target:
+    labelSelector: resource-profile=t.large
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '2'\n      memory: 2Gi\n    limits:\n      cpu: '8'\n\
+    \      memory: 8Gi\n"
+  target:
+    labelSelector: resource-profile=t.xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '4'\n      memory: 4Gi\n    limits:\n      cpu: '16'\n\
+    \      memory: 16Gi\n"
+  target:
+    labelSelector: resource-profile=t.2xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 100m\n      memory: 256Mi\n    limits:\n      cpu:\
+    \ 250m\n      memory: 512Mi\n"
+  target:
+    labelSelector: resource-profile=c.pico
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 150m\n      memory: 384Mi\n    limits:\n      cpu:\
+    \ 500m\n      memory: 1Gi\n"
+  target:
+    labelSelector: resource-profile=c.nano
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 200m\n      memory: 512Mi\n    limits:\n      cpu:\
+    \ 750m\n      memory: 1.5Gi\n"
+  target:
+    labelSelector: resource-profile=c.micro
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 250m\n      memory: 512Mi\n    limits:\n      cpu:\
+    \ '1'\n      memory: 2Gi\n"
+  target:
+    labelSelector: resource-profile=c.small
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 500m\n      memory: 1Gi\n    limits:\n      cpu: '2'\n\
+    \      memory: 4Gi\n"
+  target:
+    labelSelector: resource-profile=c.medium
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '1'\n      memory: 2Gi\n    limits:\n      cpu: '4'\n\
+    \      memory: 8Gi\n"
+  target:
+    labelSelector: resource-profile=c.large
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '2'\n      memory: 4Gi\n    limits:\n      cpu: '8'\n\
+    \      memory: 16Gi\n"
+  target:
+    labelSelector: resource-profile=c.xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '4'\n      memory: 8Gi\n    limits:\n      cpu: '16'\n\
+    \      memory: 32Gi\n"
+  target:
+    labelSelector: resource-profile=c.2xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 100m\n      memory: 512Mi\n    limits:\n      cpu:\
+    \ 250m\n      memory: 1Gi\n"
+  target:
+    labelSelector: resource-profile=m.pico
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 150m\n      memory: 768Mi\n    limits:\n      cpu:\
+    \ 500m\n      memory: 2Gi\n"
+  target:
+    labelSelector: resource-profile=m.nano
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 200m\n      memory: 1Gi\n    limits:\n      cpu: 750m\n\
+    \      memory: 3Gi\n"
+  target:
+    labelSelector: resource-profile=m.micro
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 250m\n      memory: 1Gi\n    limits:\n      cpu: '1'\n\
+    \      memory: 4Gi\n"
+  target:
+    labelSelector: resource-profile=m.small
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 500m\n      memory: 2Gi\n    limits:\n      cpu: '2'\n\
+    \      memory: 8Gi\n"
+  target:
+    labelSelector: resource-profile=m.medium
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '1'\n      memory: 4Gi\n    limits:\n      cpu: '4'\n\
+    \      memory: 16Gi\n"
+  target:
+    labelSelector: resource-profile=m.large
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '2'\n      memory: 8Gi\n    limits:\n      cpu: '8'\n\
+    \      memory: 32Gi\n"
+  target:
+    labelSelector: resource-profile=m.xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '4'\n      memory: 16Gi\n    limits:\n      cpu: '16'\n\
+    \      memory: 64Gi\n"
+  target:
+    labelSelector: resource-profile=m.2xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 100m\n      memory: 1Gi\n    limits:\n      cpu: 250m\n\
+    \      memory: 2Gi\n"
+  target:
+    labelSelector: resource-profile=r.pico
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 150m\n      memory: 1536Mi\n    limits:\n      cpu:\
+    \ 500m\n      memory: 4Gi\n"
+  target:
+    labelSelector: resource-profile=r.nano
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 200m\n      memory: 2Gi\n    limits:\n      cpu: 750m\n\
+    \      memory: 6Gi\n"
+  target:
+    labelSelector: resource-profile=r.micro
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 250m\n      memory: 2Gi\n    limits:\n      cpu: '1'\n\
+    \      memory: 8Gi\n"
+  target:
+    labelSelector: resource-profile=r.small
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: 500m\n      memory: 4Gi\n    limits:\n      cpu: '2'\n\
+    \      memory: 16Gi\n"
+  target:
+    labelSelector: resource-profile=r.medium
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '1'\n      memory: 8Gi\n    limits:\n      cpu: '4'\n\
+    \      memory: 32Gi\n"
+  target:
+    labelSelector: resource-profile=r.large
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '2'\n      memory: 16Gi\n    limits:\n      cpu: '8'\n\
+    \      memory: 64Gi\n"
+  target:
+    labelSelector: resource-profile=r.xlarge
+- patch: "- op: add\n  path: /spec/template/spec/containers/0/resources\n  value:\n\
+    \    requests:\n      cpu: '4'\n      memory: 32Gi\n    limits:\n      cpu: '16'\n\
+    \      memory: 128Gi\n"
+  target:
+    labelSelector: resource-profile=r.2xlarge
